@@ -1,0 +1,3 @@
+[submodule "ParseMongoJson"]
+	path = ParseMongoJson
+	url = https://github.com/solaris765/ParseMongoJson
