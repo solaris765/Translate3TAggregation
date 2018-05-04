@@ -142,15 +142,10 @@ function Read3TExportJSFiles(path, donePath, callback) {
                     .filter(Boolean);
 
                 lines.forEach(line => {
-                    if (line.includes("//")) {
-
-                    }
-                    else {
-                        currentFile += line
-                    }
+                    currentFile += line.replace(/\/\/.+/g, "")
                 })
 
-                currentFile = currentFile.substring(currentFile.indexOf("[") - 1, currentFile.lastIndexOf("]") + 1)
+                currentFile = currentFile.substring(currentFile.indexOf("["), currentFile.lastIndexOf("]") + 1)
 
                 currentFile = parse(currentFile)
 
