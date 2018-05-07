@@ -9,7 +9,7 @@ fs = require("fs")
  * @param {boolean} isValue 
  * @returns 
  */
-function AddCSharpMongoSyntax(obj, padval, isValue) {
+function AddCSharpMongoSyntax(obj, padval, isValue, isInArray) {
     var padBase = "    "
     var pad = ""
     for (i = 0; i < padval; i++) {
@@ -25,7 +25,7 @@ function AddCSharpMongoSyntax(obj, padval, isValue) {
         }
         for (var i = 0; i < obj.length; i++) {
 
-            output += AddCSharpMongoSyntax(obj[i], padval + 1)
+            output += AddCSharpMongoSyntax(obj[i], padval + 1, false, true)
 
             if (!(i + 1 >= obj.length)) {
                 output += ",\n"
@@ -66,11 +66,22 @@ function AddCSharpMongoSyntax(obj, padval, isValue) {
     }
 
     else {
-        if (typeof obj == 'number') {
-            output += pad + ".Add(" + obj + ")"
+        if (isInArray)
+        {
+            if (typeof obj == 'number') {
+                output += pad + obj
+            }
+            else {
+                output += pad + "\"" + obj + "\""
+            }
         }
-        else {
-            output += pad + ".Add(\"" + obj + "\")"
+        else{
+            if (typeof obj == 'number') {
+                output += pad + ".Add(" + obj + ")"
+            }
+            else {
+                output += pad + ".Add(\"" + obj + "\")"
+            }
         }
     }
 
