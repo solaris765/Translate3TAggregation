@@ -56,7 +56,12 @@ function AddCSharpMongoSyntax(obj, padval, isValue, isInArray) {
                         output += valuePadding + ".Add(\"" + key + "\", " + value + ")"
                     }
                     else {
-                        output += valuePadding + ".Add(\"" + key + "\", \"" + value + "\")"
+                        if (value === "null"){
+                            output += valuePadding + ".Add(\"" + key + "\", " + "BsonNull.Value)"
+                        }
+                        else{
+                            output += valuePadding + ".Add(\"" + key + "\", \"" + value + "\")"
+                        }
                     }
                 }
             }
