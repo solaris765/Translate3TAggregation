@@ -56,10 +56,16 @@ function AddCSharpMongoSyntax(obj, padval, isValue, isInArray) {
                         output += valuePadding + ".Add(\"" + key + "\", " + value + ")"
                     }
                     else {
-                        if (value === "null"){
+                        if (value == "null") {
                             output += valuePadding + ".Add(\"" + key + "\", " + "BsonNull.Value)"
                         }
-                        else{
+                        else if (value === true) {
+                            output += valuePadding + ".Add(\"" + key + "\", " + "BsonBoolean.True)"
+                        }
+                        else if (value === false) {
+                            output += valuePadding + ".Add(\"" + key + "\", " + "BsonBoolean.False)"
+                        }
+                        else {
                             output += valuePadding + ".Add(\"" + key + "\", \"" + value + "\")"
                         }
                     }
@@ -71,8 +77,7 @@ function AddCSharpMongoSyntax(obj, padval, isValue, isInArray) {
     }
 
     else {
-        if (isInArray)
-        {
+        if (isInArray) {
             if (typeof obj == 'number') {
                 output += pad + obj
             }
@@ -80,7 +85,7 @@ function AddCSharpMongoSyntax(obj, padval, isValue, isInArray) {
                 output += pad + "\"" + obj + "\""
             }
         }
-        else{
+        else {
             if (typeof obj == 'number') {
                 output += pad + ".Add(" + obj + ")"
             }
@@ -129,8 +134,7 @@ function ExportToC(fileName, content) {
     result = "new BsonDocument[]" + result.substring(result.indexOf(")") + 1)
     result = header + result + ";" + footer
 
-    if (!fs.existsSync("./Export"))
-    {
+    if (!fs.existsSync("./Export")) {
         fs.mkdirSync("./Export")
     }
     fs.writeFileSync("./Export/" + fileName.substring(0, fileName.length - 3) + ".cs", result)
@@ -184,15 +188,12 @@ function Read3TExportJSFiles(path, donePath, callback) {
 const convertPath = "./Import"
 const donePath = "./done"
 
-if (!fs.existsSync(donePath))
-{
+if (!fs.existsSync(donePath)) {
     fs.mkdirSync(donePath)
 }
-if (!fs.existsSync(convertPath))
-{
+if (!fs.existsSync(convertPath)) {
     console.log(convertPath + " must exist and contain files to process.")
 }
-else
-{
+else {
     Read3TExportJSFiles(convertPath, donePath, ExportToC)
 }
