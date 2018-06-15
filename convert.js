@@ -9,7 +9,9 @@ fs = require("fs")
  * @param {boolean} isValue 
  * @returns 
  */
-function AddCSharpMongoSyntax(obj, padval, isValue, isInArray) {
+function AddCSharpMongoSyntax(obj, padval, isValue, isInArray, depth, num) {
+    depth++;
+
     var padBase = "    "
     var pad = ""
     for (i = 0; i < padval; i++) {
@@ -25,7 +27,7 @@ function AddCSharpMongoSyntax(obj, padval, isValue, isInArray) {
         }
         for (var i = 0; i < obj.length; i++) {
 
-            output += AddCSharpMongoSyntax(obj[i], padval + 1, false, true)
+            output += AddCSharpMongoSyntax(obj[i], padval + 1, false, true,depth,i+1)
 
             if (!(i + 1 >= obj.length)) {
                 output += ",\n"
@@ -40,6 +42,7 @@ function AddCSharpMongoSyntax(obj, padval, isValue, isInArray) {
             output += "new BsonDocument()\n"
         }
         else {
+            if (depth == 2) output += pad + "// Stage " + num + "\n"
             output += pad + "new BsonDocument()\n"
         }
 
@@ -48,7 +51,7 @@ function AddCSharpMongoSyntax(obj, padval, isValue, isInArray) {
             // console.log(key + " and " + value)
             if (value != null) {
                 if (Array.isArray(value) || typeof value == 'object') {
-                    output += valuePadding + ".Add(\"" + key + "\", " + AddCSharpMongoSyntax(value, padval + 1, true) + ")"
+                    output += valuePadding + ".Add(\"" + key + "\", " + AddCSharpMongoSyntax(value, padval + 1, true,depth) + ")"
                 }
                 else {
                     if (typeof value == 'number') {
@@ -110,6 +113,7 @@ function ExportToC(fileName, content) {
         "using CHAD.DBConnections.DB;\n" +
         "using System.Threading.Tasks;\n" +
         "using System.Collections.Generic;\n" +
+        "using Aggregation;\n"
         "\n" +
         "namespace MongoDBQuery\n" +
         "{\n" +
@@ -127,7 +131,7 @@ function ExportToC(fileName, content) {
         "    }\n" +
         "}\n"
 
-    var result = AddCSharpMongoSyntax(content, 4, "")
+    var result = AddCSharpMongoSyntax(content, 4, "",'',0)
     result = result.replace(/[ ​\n]+,/g, ",") // move commas to preceding line
 
     // result = result.replace(/[ ]+ new BsonArray\(\)/g, "new BsonDocument[]") // Replace First Array
@@ -137,7 +141,7 @@ function ExportToC(fileName, content) {
     if (!fs.existsSync("./Export")) {
         fs.mkdirSync("./Export")
     }
-    fs.writeFileSync("./Export/" + fileName.substring(0, fileName.length - 3) + ".cs", result)
+    fs.writeFileSync("./Export/" + fileName.substring(0, fileName.length - 3).replace(/3T|^[0-9]+|([\W])|v\d\.\d/g, "") + ".cs", result)
 }
 
 /**
