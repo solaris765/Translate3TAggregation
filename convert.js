@@ -1,6 +1,8 @@
 let parse = require("./ParseMongoJson/MongoParse.js")
 fs = require("fs")
 
+var Collection;
+
 /**
  * 
  * 
@@ -51,25 +53,25 @@ function AddCSharpMongoSyntax(obj, padval, isValue, isInArray, depth, num) {
             // console.log(key + " and " + value)
             if (value != null) {
                 if (Array.isArray(value) || typeof value == 'object') {
-                    output += valuePadding + ".Add(\"" + key + "\", " + AddCSharpMongoSyntax(value, padval + 1, true,depth) + ")"
+                    output += valuePadding + ".Add(\"" + key.trim() + "\", " + AddCSharpMongoSyntax(value, padval + 1, true,depth) + ")"
                 }
                 else {
                     if (typeof value == 'number') {
                         //console.log(typeof value + " : " + value)
-                        output += valuePadding + ".Add(\"" + key + "\", " + value + ")"
+                        output += valuePadding + ".Add(\"" + key.trim() + "\", " + value + ")"
                     }
                     else {
                         if (value == "null") {
-                            output += valuePadding + ".Add(\"" + key + "\", " + "BsonNull.Value)"
+                            output += valuePadding + ".Add(\"" + key.trim() + "\", " + "BsonNull.Value)"
                         }
                         else if (value === true) {
-                            output += valuePadding + ".Add(\"" + key + "\", " + "BsonBoolean.True)"
+                            output += valuePadding + ".Add(\"" + key.trim() + "\", " + "BsonBoolean.True)"
                         }
                         else if (value === false) {
-                            output += valuePadding + ".Add(\"" + key + "\", " + "BsonBoolean.False)"
+                            output += valuePadding + ".Add(\"" + key.trim() + "\", " + "BsonBoolean.False)"
                         }
                         else {
-                            output += valuePadding + ".Add(\"" + key + "\", \"" + value + "\")"
+                            output += valuePadding + ".Add(\"" + key.trim() + "\", \"" + value.trim() + "\")"
                         }
                     }
                 }
@@ -85,7 +87,7 @@ function AddCSharpMongoSyntax(obj, padval, isValue, isInArray, depth, num) {
                 output += pad + obj
             }
             else {
-                output += pad + "\"" + obj + "\""
+                output += pad + "\"" + obj.trim() + "\""
             }
         }
         else {
@@ -93,7 +95,7 @@ function AddCSharpMongoSyntax(obj, padval, isValue, isInArray, depth, num) {
                 output += pad + ".Add(" + obj + ")"
             }
             else {
-                output += pad + ".Add(\"" + obj + "\")"
+                output += pad + ".Add(\"" + obj.trim() + "\")"
             }
         }
     }
@@ -107,18 +109,29 @@ function AddCSharpMongoSyntax(obj, padval, isValue, isInArray, depth, num) {
  * @param {string} content 
  */
 function ExportToC(fileName, content) {
+    var className = fileName.substring(0, fileName.length - 3).replace(/3T|^[0-9]+|([\W])|v\d\.\d/g, "");
     const header = "// Requires official C# and .NET MongoDB Driver 2.5+\n" +
         "using MongoDB.Bson;\n" +
         "using MongoDB.Driver;\n" +
         "using CHAD.DBConnections.DB;\n" +
         "using System.Threading.Tasks;\n" +
         "using System.Collections.Generic;\n" +
-        "using Aggregation;\n"
+        "using Aggregation;\n" +
         "\n" +
         "namespace MongoDBQuery\n" +
         "{\n" +
-        "    public class " + fileName.substring(0, fileName.length - 3).replace(/3T|^[0-9]+|([\W])|v\d\.\d/g, "") + " : AggregationBase\n" +
+        "    public class " + className + " : AggregationBase\n" +
         "    {\n" +
+        "        /// <summary>\n" +
+        "        /// Initializes a new instance of " + className + "\n" +
+        "        /// </summary>\n" +
+        "        /// <param name=\"ids\">Ids to search</param>\n" +
+        "        /// <param name=\"searchBy\">Company to search</param>\n" +
+        "        public " + className + " (AggRequest req) : base (req, CollectionList." + Collection + ") { }\n" +
+        "\n" +
+        "        /// <summary>\n" +
+        "        /// Gets the pipeline\n" +
+        "        /// </summary>\n" +
         "        protected override PipelineDefinition<BsonDocument, object> Pipeline\n" +
         "        {\n" +
         "            get\n" +
@@ -166,6 +179,11 @@ function Read3TExportJSFiles(path, donePath, callback) {
                     .filter(Boolean);
 
                 lines.forEach(line => {
+                    var matchThis = /db.(.*).aggregate\(/g;
+                    if (line.match(matchThis))
+                    {
+                        Collection = matchThis.exec(line)[1]
+                    }
                     currentFile += line.replace(/\/\/.+/g, "")
                 })
 
@@ -176,14 +194,14 @@ function Read3TExportJSFiles(path, donePath, callback) {
                 if (typeof callback === 'function') {
                     callback(file, currentFile)
                 }
-                fs.rename(path + "/" + file, donePath + "/" + file, function (err) {
-                    if (err) {
-                        console.error("Move " + file + " failed.")
-                    }
-                    else {
-                        console.log(file + ": Moved Successfully")
-                    }
-                })
+                //fs.rename(path + "/" + file, donePath + "/" + file, function (err) {
+                //    if (err) {
+                //        console.error("Move " + file + " failed.")
+                //    }
+                //    else {
+                //        console.log(file + ": Moved Successfully")
+                //    }
+                //})
             })
         }
     })
