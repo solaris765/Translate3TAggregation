@@ -86,6 +86,10 @@ function AddCSharpMongoSyntax(obj, padval, isValue, isInArray, depth, num) {
             if (typeof obj == 'number') {
                 output += pad + obj
             }
+            else if (obj.includes("{Variable: "))
+            {
+                output += pad + obj.substring(10, obj.length -1).trim()
+            }
             else {
                 output += pad + "\"" + obj.trim() + "\""
             }
@@ -178,12 +182,13 @@ function Read3TExportJSFiles(path, donePath, callback) {
                     .filter(Boolean);
 
                 lines.forEach(line => {
-                    var matchThis = /db.(.*).aggregate\(/g;
-                    if (line.match(matchThis))
-                    {
-                        Collection = matchThis.exec(line)[1]
-                    }
+                    var matchThis = /let myArray =/g;
+                    //if (line.match(matchThis))
+                    //{
+                    //    Collection = matchThis.exec(line)[1]
+                    //}
                     currentFile += line.replace(/\/\/.+/g, "")
+                    
                 })
 
                 currentFile = currentFile.substring(currentFile.indexOf("["), currentFile.lastIndexOf("]") + 1)
