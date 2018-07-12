@@ -113,10 +113,9 @@ function ExportToC(fileName, content) {
     const header = "// Requires official C# and .NET MongoDB Driver 2.5+\n" +
         "using MongoDB.Bson;\n" +
         "using MongoDB.Driver;\n" +
-        "using CHAD.DBConnections.DB;\n" +
-        "using System.Threading.Tasks;\n" +
-        "using System.Collections.Generic;\n" +
-        "using Aggregation;\n" +
+        "using static CHAD.DBConnections.DB.DashboardContext;\n" +
+        "using CHAD.Aggregation;\n" +
+        "using CHAD.DataModels.Requests;\n" +
         "\n" +
         "namespace MongoDBQuery\n" +
         "{\n" +
