@@ -23,82 +23,69 @@ function AddCSharpMongoSyntax(obj, padval, isValue, isInArray, depth, num) {
     if (Array.isArray(obj)) {
         if (isValue) {
             output += "new BsonArray()\n" + pad + "{\n"
-        }
-        else {
+        } else {
             output += pad + "new BsonArray()\n" + pad + "{\n"
         }
         for (var i = 0; i < obj.length; i++) {
 
-            output += AddCSharpMongoSyntax(obj[i], padval + 1, false, true,depth,i+1)
+            output += AddCSharpMongoSyntax(obj[i], padval + 1, false, true, depth, i + 1)
 
             if (!(i + 1 >= obj.length)) {
                 output += ",\n"
             }
         }
         output += "\n" + pad + "}"
-    }
-
-    else if (typeof obj == 'object') {
+    } else if (typeof obj == 'object') {
         var valuePadding = pad + padBase
         if (isValue) {
             output += "new BsonDocument()\n"
-        }
-        else {
+        } else {
             if (depth == 2) output += pad + "// Stage " + num + "\n"
             output += pad + "new BsonDocument()\n"
         }
 
         for (var keys = Object.keys(obj), i = 0, end = keys.length; i < end; i++) {
-            var key = keys[i], value = obj[key]
+            var key = keys[i],
+                value = obj[key]
             // console.log(key + " and " + value)
             if (value != null) {
                 if (Array.isArray(value) || typeof value == 'object') {
-                    output += valuePadding + ".Add(\"" + key.trim() + "\", " + AddCSharpMongoSyntax(value, padval + 1, true,depth) + ")"
-                }
-                else {
+                    output += valuePadding + ".Add(\"" + key.trim() + "\", " + AddCSharpMongoSyntax(value, padval + 1, true, depth) + ")"
+                } else {
                     if (typeof value == 'number') {
                         //console.log(typeof value + " : " + value)
                         output += valuePadding + ".Add(\"" + key.trim() + "\", " + value + ")"
-                    }
-                    else {
+                    } else {
                         if (value == "null") {
                             output += valuePadding + ".Add(\"" + key.trim() + "\", " + "BsonNull.Value)"
-                        }
-                        else if (value === true) {
+                        } else if (value === true) {
                             output += valuePadding + ".Add(\"" + key.trim() + "\", " + "BsonBoolean.True)"
-                        }
-                        else if (value === false) {
+                        } else if (value === false) {
                             output += valuePadding + ".Add(\"" + key.trim() + "\", " + "BsonBoolean.False)"
-                        }
-                        else {
+                        } else {
                             output += valuePadding + ".Add(\"" + key.trim() + "\", \"" + value.trim() + "\")"
                         }
                     }
                 }
             }
 
-            if (i != end - 1) { output += "\n" }
+            if (i != end - 1) {
+                output += "\n"
+            }
         }
-    }
-
-    else {
+    } else {
         if (isInArray) {
             if (typeof obj == 'number') {
                 output += pad + obj
-            }
-            else if (obj.includes("{Variable: "))
-            {
-                output += pad + obj.substring(10, obj.length -1).trim()
-            }
-            else {
+            } else if (obj.includes("{Variable: ")) {
+                output += pad + obj.substring(10, obj.length - 1).trim()
+            } else {
                 output += pad + "\"" + obj.trim() + "\""
             }
-        }
-        else {
+        } else {
             if (typeof obj == 'number') {
                 output += pad + ".Add(" + obj + ")"
-            }
-            else {
+            } else {
                 output += pad + ".Add(\"" + obj.trim() + "\")"
             }
         }
@@ -147,7 +134,7 @@ function ExportToC(fileName, content) {
         "    }\n" +
         "}\n"
 
-    var result = AddCSharpMongoSyntax(content, 4, "",'',0)
+    var result = AddCSharpMongoSyntax(content, 4, "", '', 0)
     result = result.replace(/[ ​\n]+,/g, ",") // move commas to preceding line
 
     // result = result.replace(/[ ]+ new BsonArray\(\)/g, "new BsonDocument[]") // Replace First Array
@@ -172,24 +159,36 @@ function Read3TExportJSFiles(path, donePath, callback) {
     fs.readdir(path, function (err, files) {
         if (err) {
             console.exception("path does not exist")
-        }
-        else {
+        } else {
             files.forEach(file => {
                 let currentFile
 
                 var lines = require('fs').readFileSync(path + "/" + file, 'utf-8')
                     .split('\n')
                     .filter(Boolean);
-
+                var found = false;
                 lines.forEach(line => {
                     var matchThis = /let myArray =/g;
                     //if (line.match(matchThis))
                     //{
                     //    Collection = matchThis.exec(line)[1]
                     //}
-                    currentFile += line.replace(/\/\/.+/g, "")
-                    
+
+                    if (line.search('let aggArray =') != -1) {
+                        found = true;
+                    }
+
+                    if (found) {
+                        currentFile += line.replace(/\/\/.+/g, "")
+                    }
+
                 })
+
+                if (!found)
+                {
+                    console.error("\t" + file + " contains improper formatting.");
+                    return;
+                }
 
                 currentFile = currentFile.substring(currentFile.indexOf("["), currentFile.lastIndexOf("]") + 1)
 
@@ -198,14 +197,13 @@ function Read3TExportJSFiles(path, donePath, callback) {
                 if (typeof callback === 'function') {
                     callback(file, currentFile)
                 }
-                //fs.rename(path + "/" + file, donePath + "/" + file, function (err) {
-                //    if (err) {
-                //        console.error("Move " + file + " failed.")
-                //    }
-                //    else {
-                //        console.log(file + ": Moved Successfully")
-                //    }
-                //})
+                fs.rename(path + "/" + file, donePath + "/" + file, function (err) {
+                    if (err) {
+                        console.error("\tMove " + file + " failed.")
+                    } else {
+                        console.log("\t" + file + ": Moved Successfully")
+                    }
+                })
             })
         }
     })
@@ -219,7 +217,6 @@ if (!fs.existsSync(donePath)) {
 }
 if (!fs.existsSync(convertPath)) {
     console.log(convertPath + " must exist and contain files to process.")
-}
-else {
+} else {
     Read3TExportJSFiles(convertPath, donePath, ExportToC)
 }
